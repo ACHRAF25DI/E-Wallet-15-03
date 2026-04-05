@@ -4,257 +4,283 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E-Wallet | Tableau de bord</title>
-  <link rel="stylesheet" href="/src/CSS/styles.css">
+  <link rel="stylesheet" href="../css/styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
   <header>
     <nav class="navbar">
       <a href="/index.html" class="logo">
-        <img src="/assets/e-wallet-logo.avif" alt="Logo E-Wallet">
+        <img src="../../assets/e-wallet-logo.avif" alt="Logo E-Wallet">
       </a>
-      <ul class="nav-links">
-        <li><button id="logoutBtn" class="btn btn-secondary" style="padding:8px 20px;">
-          <i class="fas fa-sign-out-alt"></i> Déconnexion
-        </button></li>
-      </ul>
+      <ul class="nav-links"></ul>
     </nav>
   </header>
 
   <main class="dashboard-main">
     <div class="dashboard-container">
-
-      <!-- ── Sidebar ──────────────────────────────────────── -->
+      
       <aside class="dashboard-sidebar">
         <nav class="sidebar-nav">
           <ul>
             <li class="active">
-              <a href="#overview"><i class="fas fa-home"></i><span>Vue d'ensemble</span></a>
+              <a href="#overview">
+                <i class="fas fa-home"></i>
+                <span>Vue d'ensemble</span>
+              </a>
             </li>
             <li>
-              <a href="#transactions"><i class="fas fa-exchange-alt"></i><span>Transactions</span></a>
+              <a href="#transactions">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Transactions</span>
+              </a>
             </li>
             <li>
-              <a href="#cards"><i class="fas fa-credit-card"></i><span>Mes cartes</span></a>
+              <a href="#cards">
+                <i class="fas fa-credit-card"></i>
+                <span>Mes cartes</span>
+              </a>
             </li>
             <li>
-              <a href="#credit-section"><i class="fas fa-plus-circle"></i><span>Créditer</span></a>
-            </li>
-            <li>
-              <a href="#debit-section"><i class="fas fa-minus-circle"></i><span>Débiter</span></a>
+              <a href="#transfers">
+                <i class="fas fa-paper-plane"></i>
+                <span>Transferts</span>
+              </a>
             </li>
             <li class="separator"></li>
             <li>
-              <a href="#transfer-section"><i class="fas fa-paper-plane"></i><span>Transfert</span></a>
+              <a href="#support">
+                <i class="fas fa-headset"></i>
+                <span>Aide & Support</span>
+              </a>
             </li>
           </ul>
         </nav>
       </aside>
 
-      <!-- ── Main content ──────────────────────────────────── -->
       <div class="dashboard-content">
-
-        <!-- ══ OVERVIEW ════════════════════════════════════ -->
+        
         <section id="overview" class="dashboard-section active">
           <div class="section-header">
-            <h2>Bonjour, <span id="greetingName">…</span> !</h2>
+            <h2>Bonjour, <span id="greetingName">?</span> !</h2>
             <p class="date-display" id="currentDate"></p>
           </div>
 
-          <!-- Summary cards -->
           <div class="summary-cards">
             <div class="summary-card">
-              <div class="card-icon blue"><i class="fas fa-wallet"></i></div>
+              <div class="card-icon blue">
+                <i class="fas fa-wallet"></i>
+              </div>
               <div class="card-details">
                 <span class="card-label">Solde disponible</span>
-                <span class="card-value" id="availableBalance">…</span>
+                <span class="card-value" id="availableBalance">?</span>
               </div>
             </div>
+
             <div class="summary-card">
-              <div class="card-icon green"><i class="fas fa-arrow-down"></i></div>
+              <div class="card-icon green">
+                <i class="fas fa-arrow-up"></i>
+              </div>
               <div class="card-details">
-                <span class="card-label">Revenus totaux</span>
-                <span class="card-value" id="monthlyIncome">…</span>
+                <span class="card-label">Revenus</span>
+                <span class="card-value" id="monthlyIncome">?</span>
               </div>
             </div>
+
             <div class="summary-card">
-              <div class="card-icon red"><i class="fas fa-arrow-up"></i></div>
+              <div class="card-icon red">
+                <i class="fas fa-arrow-down"></i>
+              </div>
               <div class="card-details">
-                <span class="card-label">Dépenses totales</span>
-                <span class="card-value" id="monthlyExpenses">…</span>
+                <span class="card-label">Dépenses</span>
+                <span class="card-value" id="monthlyExpenses">?</span>
               </div>
             </div>
+
             <div class="summary-card">
-              <div class="card-icon purple"><i class="fas fa-credit-card"></i></div>
+              <div class="card-icon purple">
+                <i class="fas fa-credit-card"></i>
+              </div>
               <div class="card-details">
                 <span class="card-label">Cartes actives</span>
-                <span class="card-value" id="activeCards">…</span>
+                <span class="card-value" id="activeCards">?</span>
               </div>
             </div>
           </div>
 
-          <!-- Quick actions -->
           <div class="quick-actions">
             <h3>Actions rapides</h3>
             <div class="action-buttons">
-              <button class="action-btn" id="quickTopup">
-                <i class="fas fa-plus-circle"></i><span>Créditer</span>
+              <button class="action-btn" id="quickTransfer" type="button">
+                <i class="fas fa-paper-plane"></i>
+                <span>Transférer</span>
               </button>
-              <button class="action-btn" id="quickTransfer">
-                <i class="fas fa-paper-plane"></i><span>Transférer</span>
+              <button class="action-btn" id="quickTopup" type="button">
+                <i class="fas fa-plus-circle"></i>
+                <span>Recharger</span>
               </button>
-              <button class="action-btn" id="quickRequest">
-                <i class="fas fa-minus-circle"></i><span>Débiter</span>
+              <button class="action-btn" id="quickRequest" type="button">
+                <i class="fas fa-hand-holding-usd"></i>
+                <span>Demander</span>
               </button>
             </div>
           </div>
-
-          <!-- Recent transactions -->
+          
           <div class="recent-transactions">
             <div class="section-header">
               <h3>Transactions récentes</h3>
             </div>
-            <div class="transactions-list" id="recentTransactionsList">
-              <p class="no-data">Chargement…</p>
-            </div>
+            <div class="transactions-list" id="recentTransactionsList"></div>
           </div>
         </section>
 
-        <!-- ══ TRANSACTIONS ══════════════════════════════════ -->
-        <section id="transactions" class="dashboard-section">
-          <div class="section-header">
-            <h2>Toutes les transactions</h2>
-          </div>
-          <div class="transactions-list" id="recentTransactionsList"></div>
-        </section>
-
-        <!-- ══ CARTES ════════════════════════════════════════ -->
         <section id="cards" class="dashboard-section">
           <div class="section-header">
             <h2>Mes cartes</h2>
-            <button class="btn btn-secondary" id="addCardBtn">
+            <button class="btn btn-secondary" id="addCardBtn" type="button">
               <i class="fas fa-plus"></i> Ajouter une carte
             </button>
           </div>
+          
           <div class="cards-grid" id="cardsGrid">
-            <p class="no-data">Chargement…</p>
-          </div>
-        </section>
-
-        <!-- ══ CRÉDIT ════════════════════════════════════════ -->
-        <section id="credit-section" class="dashboard-section">
-          <div class="section-header">
-            <h2><i class="fas fa-plus-circle" style="color:#22c55e"></i> Créditer le portefeuille</h2>
-            <button class="btn btn-close" id="closeCreditBtn"><i class="fas fa-times"></i></button>
-          </div>
-
-          <div class="transfer-container">
-            <div class="transfer-form">
-              <div class="form-group">
-                <label for="creditFrom"><i class="fas fa-user"></i> Source du crédit</label>
-                <input type="text" id="creditFrom" placeholder="Ex: Ahmed, Banque CIH…">
+            <div class="card-item">
+              <div class="card-preview visa">
+                <div class="card-chip"></div>
+                <div class="card-number">?</div>
+                <div class="card-holder">?</div>
+                <div class="card-expiry">?</div>
+                <div class="card-type">?</div>
               </div>
-              <div class="form-group">
-                <label for="creditAmount"><i class="fas fa-coins"></i> Montant à créditer</label>
-                <div class="amount-input">
-                  <input type="number" id="creditAmount" min="1" step="0.01" placeholder="0.00" required>
-                  <span class="currency">MAD</span>
-                </div>
-              </div>
-              <p id="creditMsg" class="form-msg"></p>
-              <div class="form-actions">
-                <button type="button" class="btn btn-secondary" id="closeCreditBtn2">Annuler</button>
-                <button type="button" class="btn btn-success" id="creditBtn">
-                  <i class="fas fa-plus-circle"></i> Créditer
+              <div class="card-actions">
+                <button class="card-action" title="Définir par défaut" type="button">
+                  <i class="fas fa-star"></i>
+                </button>
+                <button class="card-action" title="Geler la carte" type="button">
+                  <i class="fas fa-snowflake"></i>
+                </button>
+                <button class="card-action" title="Supprimer" type="button">
+                  <i class="fas fa-trash"></i>
                 </button>
               </div>
             </div>
           </div>
         </section>
-
-        <!-- ══ DÉBIT ═════════════════════════════════════════ -->
-        <section id="debit-section" class="dashboard-section">
-          <div class="section-header">
-            <h2><i class="fas fa-minus-circle" style="color:#ef4444"></i> Débiter le portefeuille</h2>
-            <button class="btn btn-close" id="closeDebitBtn"><i class="fas fa-times"></i></button>
-          </div>
-
-          <div class="transfer-container">
-            <div class="transfer-form">
-              <div class="form-group">
-                <label for="debitTo"><i class="fas fa-store"></i> Destination</label>
-                <input type="text" id="debitTo" placeholder="Ex: Amazon, Marjane…">
-              </div>
-              <div class="form-group">
-                <label for="debitAmount"><i class="fas fa-coins"></i> Montant à débiter</label>
-                <div class="amount-input">
-                  <input type="number" id="debitAmount" min="1" step="0.01" placeholder="0.00" required>
-                  <span class="currency">MAD</span>
-                </div>
-              </div>
-              <p id="debitMsg" class="form-msg"></p>
-              <div class="form-actions">
-                <button type="button" class="btn btn-secondary" id="closeDebitBtn2">Annuler</button>
-                <button type="button" class="btn btn-danger" id="debitBtn">
-                  <i class="fas fa-minus-circle"></i> Débiter
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ══ TRANSFERT ═════════════════════════════════════ -->
-        <section id="transfer-section" class="dashboard-section">
-          <div class="section-header">
-            <h2>Effectuer un transfert</h2>
-            <button class="btn btn-close" id="closeTransferBtn"><i class="fas fa-times"></i></button>
-          </div>
-          <div class="transfer-container">
-            <form id="transferForm" class="transfer-form">
-              <div class="form-group">
-                <label for="beneficiary"><i class="fas fa-user"></i> Bénéficiaire</label>
-                <select id="beneficiary" required>
-                  <option value="" disabled selected>Choisir un bénéficiaire</option>
-                  <option value="1">Ahmed</option>
-                  <option value="2">Sara</option>
-                  <option value="3">Youssef</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="sourceCard"><i class="fas fa-credit-card"></i> Depuis ma carte</label>
-                <select id="sourceCard" required>
-                  <option value="" disabled selected>Sélectionner une carte</option>
-                  <option value="124847">VISA •••• 4847</option>
-                  <option value="124478">Mastercard •••• 4478</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="transferAmount"><i class="fas fa-coins"></i> Montant</label>
-                <div class="amount-input">
-                  <input type="number" id="transferAmount" min="1" step="0.01" placeholder="0.00" required>
-                  <span class="currency">MAD</span>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="button" class="btn btn-secondary" id="cancelTransferBtn">Annuler</button>
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-paper-plane"></i> Transférer
-                </button>
-              </div>
-            </form>
-          </div>
-        </section>
-
-      </div><!-- /dashboard-content -->
-    </div><!-- /dashboard-container -->
+      </div>
+    </div>
   </main>
+
+  <div class="popup-overlay" id="transferPopup">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h2>Effectuer un transfert</h2>
+        <button class="btn-close" id="closeTransferBtn" type="button">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="popup-body">
+        <form id="transferForm" class="transfer-form">
+          <div class="form-group">
+            <label for="beneficiary">
+              <i class="fas fa-user"></i> Bénéficiaire
+            </label>
+            <select id="beneficiary" name="beneficiary" required>
+              <option value="" disabled selected>Choisir un bénéficiaire</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="sourceCard">
+              <i class="fas fa-credit-card"></i> Depuis ma carte
+            </label>
+            <select id="sourceCard" name="sourceCard" required>
+              <option value="" disabled selected>Sélectionner une carte</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="amount">
+              <i></i> Montant
+            </label>
+            <div class="amount-input">
+              <input type="number" id="amount" name="amount" min="1" step="0.01" placeholder="0.00" required>
+              <span class="currency">MAD</span>
+            </div>
+          </div>
+
+          <div class="form-options">
+            <div class="checkbox-group">
+              <input type="checkbox" id="saveBeneficiary" name="saveBeneficiary">
+              <label for="saveBeneficiary">Enregistrer ce bénéficiaire</label>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="instantTransfer" name="instantTransfer">
+              <label for="instantTransfer">Transfert instantané <span class="fee-badge">+13.4 MAD</span></label>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelTransferBtn">
+              Annuler
+            </button>
+            <button type="submit" class="btn btn-primary" id="submitTransferBtn">
+              <i class="fas fa-paper-plane"></i> Transférer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup-overlay" id="topupPopup">
+    <div class="popup-content">
+      <div class="popup-header">
+        <h2>Recharger mon compte</h2>
+        <button class="btn-close" id="closeTopupBtn" type="button">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="popup-body">
+        <form id="topupForm" class="transfer-form">
+          <div class="form-group">
+            <label for="topupSourceCard">
+              <i class="fas fa-credit-card"></i> Moyen de paiement
+            </label>
+            <select id="topupSourceCard" name="topupSourceCard" required>
+              <option value="" disabled selected>Sélectionner une carte</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="topupAmount">
+              <i class="fas fa-coins"></i> Montant à ajouter
+            </label>
+            <div class="amount-input">
+              <input type="number" id="topupAmount" name="topupAmount" min="1" step="0.01" placeholder="0.00" required>
+              <span class="currency">MAD</span>
+            </div>
+            <small style="color: #666; font-size: 0.85rem; margin-top: 5px; display: block;">Limites : min 10 MAD - max 10 000 MAD</small>
+          </div>
+          
+          <div class="form-actions" style="margin-top: 20px;">
+            <button type="button" class="btn btn-secondary" id="cancelTopupBtn" onclick="document.getElementById('topupPopup').classList.remove('active'); document.body.classList.remove('popup-open');">
+              Annuler
+            </button>
+            <button type="submit" class="btn btn-primary" id="submitTopupBtn">
+              <i class="fas fa-plus-circle"></i> Valider la recharge
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <p>&copy; 2026 E-Wallet. Tous droits réservés.</p>
   </footer>
 
-  <script type="module" src="/src/Controllers/dashboard.js"></script>
+  <script type="module" src="../controllers/dashboard.js"></script>
 </body>
 </html>

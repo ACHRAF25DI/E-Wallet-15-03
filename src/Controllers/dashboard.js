@@ -1,296 +1,267 @@
-// ============================================================
-//  E-Wallet — Controller : dashboard.js
-//  Dashboard principal — Crédit / Débit / Stats
-//  Utilise async/await ET callbacks selon les fonctions
-// ============================================================
-import { getUserById, creditWallet, debitWallet, getStats } from "../Models/database.js";
-import Session from "../Models/session.js";
+import { getbeneficiaries, finduserbyaccount, findbeneficiarieByid } from "../Model/database.js";
 
-// ── Guard : vérifier session ────────────────────────────────
-const session = Session.get();
-if (!session) {
-  window.location.href = "/src/Views/login.html";
+// --- 1. INITIALISATION & SÉCURITÉ ---
+const user = JSON.parse(sessionStorage.getItem("currentUser"));
+
+// Guard : Redirection si non connecté
+if (!user) {
+  alert("Utilisateur non authentifié");
+  window.location.href = "/index.html";
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+// --- 2. ÉLÉMENTS DU DOM ---
+const greetingName = document.getElementById("greetingName");
+const currentDate = document.getElementById("currentDate");
+const solde = document.getElementById("availableBalance");
+const incomeElement = document.getElementById("monthlyIncome");
+const expensesElement = document.getElementById("monthlyExpenses");
+const activecards = document.getElementById("activeCards");
+const transactionsList = document.getElementById("recentTransactionsList");
 
-  // ── 1. Charger l'utilisateur ──────────────────────────────
-  let currentUser;
-  try {
-    currentUser = await getUserById(session.id);
-  } catch (err) {
-    alert("Erreur : " + err.message);
-    Session.clear();
-    window.location.href = "/src/Views/login.html";
-    return;
-  }
+// Éléments Transfert
+const transferBtn = document.getElementById("quickTransfer");
+const transferPopup = document.getElementById("transferPopup");
+const closeTransferBtn = document.getElementById("closeTransferBtn");
+const cancelTransferBtn = document.getElementById("cancelTransferBtn");
+const transferForm = document.getElementById("transferForm");
+const beneficiarySelect = document.getElementById("beneficiary");
+const sourceCard = document.getElementById("sourceCard");
 
-  // ── 2. Afficher les infos de base ─────────────────────────
-  renderGreeting(currentUser);
-  renderDate();
-  renderCards(currentUser);
+// Éléments Rechargement (TP)
+const quickTopupBtn = document.getElementById("quickTopup");
+const topupPopup = document.getElementById("topupPopup");
+const closeTopupBtn = document.getElementById("closeTopupBtn");
+const cancelTopupBtn = document.getElementById("cancelTopupBtn");
+const topupForm = document.getElementById("topupForm");
+const topupSourceCard = document.getElementById("topupSourceCard");
 
-  // ── 3. Stats (callback style) ─────────────────────────────
-  loadStats(currentUser.id);
 
-  // ── 4. Transactions récentes ──────────────────────────────
-  renderTransactions(currentUser.wallet.transactions);
+// --- 3. AFFICHAGE (UI) ---
+const getDashboardData = () => {
+  const monthlyIncome = user.wallet.transactions
+    .filter(t => t.type === "credit")
+    .reduce((total, t) => total + t.amount, 0);
 
-  // ── 5. Navigation sidebar ─────────────────────────────────
-  setupSidebarNav();
+  const monthlyExpenses = user.wallet.transactions
+    .filter(t => t.type === "debit")
+    .reduce((total, t) => total + t.amount, 0);
 
-  // ── 6. Quick actions ──────────────────────────────────────
-  setupQuickActions();
+  return {
+    userName: user.name,
+    currentDate: new Date().toLocaleDateString("fr-FR"),
+    availableBalance: `${user.wallet.balance.toFixed(2)} ${user.wallet.currency}`,
+    activeCards: user.wallet.cards.length,
+    monthlyIncome: `${monthlyIncome.toFixed(2)} MAD`,
+    monthlyExpenses: `${monthlyExpenses.toFixed(2)} MAD`,
+  };
+};
 
-  // ── 7. Formulaires Crédit / Débit ────────────────────────
-  setupCreditForm(currentUser);
-  setupDebitForm(currentUser);
+function renderDashboard() {
+  const dashboardData = getDashboardData();
+  greetingName.textContent = dashboardData.userName;
+  currentDate.textContent = dashboardData.currentDate;
+  solde.textContent = dashboardData.availableBalance;
+  incomeElement.textContent = dashboardData.monthlyIncome;
+  expensesElement.textContent = dashboardData.monthlyExpenses;
+  activecards.textContent = dashboardData.activeCards;
 
-  // ── 8. Déconnexion ────────────────────────────────────────
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      Session.clear();
-      window.location.href = "/src/Views/login.html";
-    });
-  }
+  // Affichage des transactions
+  transactionsList.innerHTML = "";
+  // On inverse pour voir les plus récentes en haut
+  user.wallet.transactions.slice().reverse().forEach(transaction => {
+    const transactionItem = document.createElement("div");
+    transactionItem.className = "transaction-item";
+    transactionItem.innerHTML = `
+      <div><strong>${transaction.label || transaction.type}</strong> <br> <small>${transaction.date}</small></div>
+      <div style="color: ${transaction.type === 'credit' ? 'green' : 'red'}; font-weight: bold;">
+        ${transaction.type === 'credit' ? '+' : '-'}${transaction.amount} MAD
+      </div>
+    `;
+    transactionsList.appendChild(transactionItem);
+  });
+}
+
+// Initialisation des listes déroulantes
+function renderOptions() {
+  // Bénéficiaires
+  const beneficiaries = getbeneficiaries(user.id);
+  beneficiarySelect.innerHTML = '<option value="" disabled selected>Choisir un bénéficiaire</option>';
+  beneficiaries.forEach((b) => {
+    beneficiarySelect.appendChild(new Option(b.name, b.id));
+  });
+
+  // Cartes (pour transfert et recharge)
+  sourceCard.innerHTML = '<option value="" disabled selected>Sélectionner une carte</option>';
+  topupSourceCard.innerHTML = '<option value="" disabled selected>Sélectionner une carte</option>';
+  
+  user.wallet.cards.forEach((card) => {
+    const cardText = `${card.type} ****${card.numcards.slice(-4)}`;
+    sourceCard.appendChild(new Option(cardText, card.numcards));
+    topupSourceCard.appendChild(new Option(cardText, card.numcards));
+  });
+}
+
+
+// --- 4. GESTION DES FENÊTRES (POPUPS) ---
+function openPopup(popup) {
+  popup.classList.add("active");
+  document.body.classList.add("popup-open");
+}
+
+function closePopups() {
+  transferPopup.classList.remove("active");
+  topupPopup.classList.remove("active");
+  document.body.classList.remove("popup-open");
+}
+
+// Événements d'ouverture/fermeture
+transferBtn.addEventListener("click", () => openPopup(transferPopup));
+quickTopupBtn.addEventListener("click", () => openPopup(topupPopup));
+
+[closeTransferBtn, cancelTransferBtn, closeTopupBtn, cancelTopupBtn].forEach(btn => {
+  if(btn) btn.addEventListener("click", closePopups);
 });
 
-/* ══════════════════════════════════════════════════════════
-   RENDUS DOM
-══════════════════════════════════════════════════════════ */
 
-function renderGreeting(user) {
-  const el = document.getElementById("greetingName");
-  if (el) el.textContent = user.name;
-}
+// =====================================================================
+// --- 5. LOGIQUE MÉTIER AVEC PROMISES (ASYNC / AWAIT) ---
+// =====================================================================
 
-function renderDate() {
-  const el = document.getElementById("currentDate");
-  if (el) {
-    el.textContent = new Date().toLocaleDateString("fr-FR", {
-      weekday: "long", year: "numeric", month: "long", day: "numeric",
+// ----- PROMISES GÉNÉRIQUES -----
+const checkBalanceAsync = (amount) => new Promise((resolve, reject) => {
+  setTimeout(() => {
+    if (user.wallet.balance >= amount) resolve("Solde suffisant.");
+    else reject("Solde insuffisant pour cette opération.");
+  }, 500);
+});
+
+// ==========================================
+// A. FONCTIONNALITÉ TRANSFERT (Refactorisée)
+// ==========================================
+const checkBeneficiaryAsync = (numcompte) => new Promise((resolve, reject) => {
+  setTimeout(() => {
+    const beneficiary = finduserbyaccount(numcompte);
+    if (beneficiary) resolve(beneficiary);
+    else reject("Bénéficiaire introuvable dans le système.");
+  }, 800);
+});
+
+async function handleTransfer(e) {
+  e.preventDefault();
+  const beneficiaryId = document.getElementById("beneficiary").value;
+  const amount = Number(document.getElementById("amount").value);
+
+  try {
+    const beneAcc = findbeneficiarieByid(user.id, beneficiaryId).account;
+    
+    // 1. Vérification du bénéficiaire
+    const destinataire = await checkBeneficiaryAsync(beneAcc);
+    
+    // 2. Vérification du solde
+    await checkBalanceAsync(amount);
+    
+    // 3. Mise à jour des données (Simulation Serveur)
+    user.wallet.balance -= amount;
+    destinataire.wallet.balance += amount;
+
+    // 4. Enregistrement des transactions
+    const dateNow = new Date().toLocaleDateString("fr-FR");
+    user.wallet.transactions.push({
+      id: Date.now(), type: "debit", amount: amount, date: dateNow, label: `Transfert vers ${destinataire.name}`
     });
+    destinataire.wallet.transactions.push({
+      id: Date.now() + 1, type: "credit", amount: amount, date: dateNow, label: `Reçu de ${user.name}`
+    });
+
+    // 5. Sauvegarde
+    sessionStorage.setItem("currentUser", JSON.stringify(user));
+    
+    alert(`Transfert de ${amount} MAD vers ${destinataire.name} réussi !`);
+    transferForm.reset();
+    closePopups();
+    renderDashboard();
+
+  } catch (error) {
+    alert("Échec du transfert : " + error);
   }
 }
 
-/* ── Stats via CALLBACK ─────────────────────────────────── */
-function loadStats(userId) {
-  getStats(userId, (err, stats) => {
-    if (err) { console.error(err); return; }
 
-    const fmt = (n) => n.toLocaleString("fr-MA") + " MAD";
-    setText("availableBalance", fmt(stats.balance));
-    setText("monthlyIncome",    fmt(stats.income));
-    setText("monthlyExpenses",  fmt(stats.expenses));
-    setText("activeCards",      stats.activeCards + " carte(s)");
-  });
-}
+// ==========================================
+// B. FONCTIONNALITÉ RECHARGEMENT (TP AVANCÉ)
+// ==========================================
 
-function setText(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = val;
-}
+/**
+ * Règle de gestion : Vérifie si la carte existe, appartient à l'utilisateur et n'est pas expirée.
+ */
+const checkCardValidityAsync = (cardNum) => new Promise((resolve, reject) => {
+  setTimeout(() => {
+    const card = user.wallet.cards.find(c => c.numcards === cardNum);
+    if (!card) return reject("Moyen de paiement inexistant ou non associé à ce compte.");
+    
+    // Simulation : si la date d'expiration simulée est dépassée
+    // (Dans un cas réel on comparerait card.expirationDate avec Date.now())
+    if (card.status === "expired") return reject("Cette carte est expirée.");
 
-/* ── Transactions ───────────────────────────────────────── */
-function renderTransactions(transactions) {
-  const list = document.getElementById("recentTransactionsList");
-  if (!list) return;
-  list.innerHTML = "";
+    resolve(card);
+  }, 800); // Simulation latence réseau
+});
 
-  if (!transactions.length) {
-    list.innerHTML = "<p class='no-data'>Aucune transaction.</p>";
-    return;
-  }
+/**
+ * Règle de gestion : Vérifie les limites de montant.
+ */
+const authorizeTopupAsync = (amount) => new Promise((resolve, reject) => {
+  setTimeout(() => {
+    if (!amount || amount <= 0) reject("Le montant doit être strictement supérieur à zéro.");
+    if (amount < 10) reject("Le montant minimum de recharge est de 10 MAD.");
+    if (amount > 10000) reject("Le plafond de recharge par opération est de 10 000 MAD.");
+    resolve("Autorisation bancaire accordée.");
+  }, 1000); // Simulation paiement
+});
 
-  transactions.slice(0, 8).forEach((tx) => {
-    const div = document.createElement("div");
-    div.className = `transaction-item ${tx.type}`;
-    const sign  = tx.type === "credit" ? "+" : "-";
-    const icon  = tx.type === "credit" ? "fa-arrow-down" : "fa-arrow-up";
-    const color = tx.type === "credit" ? "#22c55e" : "#ef4444";
+async function handleTopup(e) {
+  e.preventDefault();
+  const cardNum = document.getElementById("topupSourceCard").value;
+  const amount = Number(document.getElementById("topupAmount").value);
 
-    div.innerHTML = `
-      <div class="tx-icon" style="background:${color}20; color:${color}">
-        <i class="fas ${icon}"></i>
-      </div>
-      <div class="tx-info">
-        <span class="tx-party">${tx.type === "credit" ? tx.from : tx.to}</span>
-        <span class="tx-date">${tx.date}</span>
-      </div>
-      <span class="tx-amount" style="color:${color}">
-        ${sign}${tx.amount.toLocaleString("fr-MA")} MAD
-      </span>
-    `;
-    list.appendChild(div);
-  });
-}
+  try {
+    // 1. Validation de la carte (Precondition)
+    await checkCardValidityAsync(cardNum);
 
-/* ── Cartes ─────────────────────────────────────────────── */
-function renderCards(user) {
-  const grid = document.getElementById("cardsGrid");
-  if (!grid) return;
-  grid.innerHTML = "";
+    // 2. Validation du montant et autorisation (Règles de gestion)
+    await authorizeTopupAsync(amount);
 
-  user.wallet.cards.forEach((card, i) => {
-    const div = document.createElement("div");
-    div.className = "card-item";
-    div.innerHTML = `
-      <div class="card-preview ${card.type}">
-        <div class="card-chip"></div>
-        <div class="card-number">•••• •••• ${card.numcards.slice(-4)}</div>
-        <div class="card-holder">${user.name.toUpperCase()}</div>
-        <div class="card-expiry">${card.expiry}</div>
-        <div class="card-type">${card.type.toUpperCase()}</div>
-        <div class="card-balance">${Number(card.balance).toLocaleString("fr-MA")} MAD</div>
-      </div>
-      <div class="card-actions">
-        <button class="card-action" title="Définir par défaut"><i class="fas fa-star"></i></button>
-        <button class="card-action" title="Geler la carte"><i class="fas fa-snowflake"></i></button>
-        <button class="card-action" title="Supprimer"><i class="fas fa-trash"></i></button>
-      </div>
-    `;
-    grid.appendChild(div);
-  });
-}
+    // 3. Postcondition : Mise à jour du solde
+    user.wallet.balance += amount;
 
-/* ══════════════════════════════════════════════════════════
-   CRÉDIT — async/await
-══════════════════════════════════════════════════════════ */
-function setupCreditForm(user) {
-  const form    = document.getElementById("creditForm");
-  const btn     = document.getElementById("creditBtn");
-  const msg     = document.getElementById("creditMsg");
-
-  if (!btn) return;
-
-  btn.addEventListener("click", async () => {
-    const amount = document.getElementById("creditAmount").value;
-    const from   = document.getElementById("creditFrom").value.trim() || "Externe";
-
-    setMsg(msg, "Traitement en cours…", "info");
-    btn.disabled = true;
-
-    try {
-      // ── ASYNC / AWAIT ──────────────────────────────────
-      const result = await creditWallet(user.id, amount, from);
-      // Mettre à jour la référence locale
-      user.wallet = result.user.wallet;
-
-      setMsg(msg, `✅ Crédit de ${Number(amount).toLocaleString("fr-MA")} MAD effectué !`, "success");
-      loadStats(user.id);
-      renderTransactions(user.wallet.transactions);
-      document.getElementById("creditAmount").value = "";
-      document.getElementById("creditFrom").value   = "";
-    } catch (err) {
-      setMsg(msg, "❌ " + err.message, "error");
-    } finally {
-      btn.disabled = false;
-    }
-  });
-}
-
-/* ══════════════════════════════════════════════════════════
-   DÉBIT — async/await
-══════════════════════════════════════════════════════════ */
-function setupDebitForm(user) {
-  const btn = document.getElementById("debitBtn");
-  const msg = document.getElementById("debitMsg");
-
-  if (!btn) return;
-
-  btn.addEventListener("click", async () => {
-    const amount = document.getElementById("debitAmount").value;
-    const to     = document.getElementById("debitTo").value.trim() || "Externe";
-
-    setMsg(msg, "Traitement en cours…", "info");
-    btn.disabled = true;
-
-    try {
-      // ── ASYNC / AWAIT ──────────────────────────────────
-      const result = await debitWallet(user.id, amount, to);
-      user.wallet = result.user.wallet;
-
-      setMsg(msg, `✅ Débit de ${Number(amount).toLocaleString("fr-MA")} MAD effectué !`, "success");
-      loadStats(user.id);
-      renderTransactions(user.wallet.transactions);
-      document.getElementById("debitAmount").value = "";
-      document.getElementById("debitTo").value     = "";
-    } catch (err) {
-      setMsg(msg, "❌ " + err.message, "error");
-    } finally {
-      btn.disabled = false;
-    }
-  });
-}
-
-function setMsg(el, text, type) {
-  if (!el) return;
-  el.textContent = text;
-  el.className   = "form-msg " + type;
-}
-
-/* ══════════════════════════════════════════════════════════
-   NAVIGATION SIDEBAR
-══════════════════════════════════════════════════════════ */
-function setupSidebarNav() {
-  const navLinks = document.querySelectorAll(".sidebar-nav a");
-  const sections = document.querySelectorAll(".dashboard-section");
-
-  navLinks.forEach((link) => {
-    link.addEventListener("click", (e) => {
-      e.preventDefault();
-      const target = link.getAttribute("href").slice(1); // retire le #
-
-      sections.forEach((s) => s.classList.remove("active"));
-      navLinks.forEach((l) => l.parentElement.classList.remove("active"));
-
-      const targetSection = document.getElementById(target);
-      if (targetSection) targetSection.classList.add("active");
-      link.parentElement.classList.add("active");
+    // 4. Postcondition : Enregistrement de la transaction (RECHARGE)
+    user.wallet.transactions.push({
+      id: Date.now(),
+      type: "credit",
+      label: "Recharge par carte bancaire",
+      amount: amount,
+      date: new Date().toLocaleDateString("fr-FR")
     });
-  });
+
+    // 5. Sauvegarde locale (Persistance)
+    sessionStorage.setItem("currentUser", JSON.stringify(user));
+
+    // 6. Succès de l'UI
+    alert(`Rechargement de ${amount} MAD effectué avec succès !`);
+    topupForm.reset();
+    closePopups();
+    renderDashboard();
+
+  } catch (error) {
+    // Postcondition d'échec : Message d'erreur
+    alert("Erreur lors du rechargement : " + error);
+  }
 }
 
-/* ══════════════════════════════════════════════════════════
-   QUICK ACTIONS
-══════════════════════════════════════════════════════════ */
-function setupQuickActions() {
-  document.getElementById("quickTopup")?.addEventListener("click", () => {
-    showSection("credit-section");
-  });
+// --- 6. ATTACHEMENT DES ÉVÉNEMENTS SUBMIT ---
+transferForm.addEventListener("submit", handleTransfer);
+topupForm.addEventListener("submit", handleTopup);
 
-  document.getElementById("quickTransfer")?.addEventListener("click", () => {
-    showSection("transfer-section");
-  });
-
-  document.getElementById("quickRequest")?.addEventListener("click", () => {
-    showSection("debit-section");
-  });
-
-  document.getElementById("closeTransferBtn")?.addEventListener("click", () => {
-    hideSection("transfer-section");
-    showSection("overview");
-  });
-
-  document.getElementById("closeCreditBtn")?.addEventListener("click", () => {
-    hideSection("credit-section");
-    showSection("overview");
-  });
-
-  document.getElementById("closeDebitBtn")?.addEventListener("click", () => {
-    hideSection("debit-section");
-    showSection("overview");
-  });
-}
-
-function showSection(id) {
-  document.querySelectorAll(".dashboard-section").forEach((s) => s.classList.remove("active"));
-  const el = document.getElementById(id);
-  if (el) el.classList.add("active");
-}
-
-function hideSection(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove("active");
-}
+// --- 7. DÉMARRAGE DE L'APPLICATION ---
+renderDashboard();
+renderOptions();

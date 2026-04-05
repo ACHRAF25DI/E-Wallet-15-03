@@ -1,29 +1,13 @@
-// ============================================================
-//  E-Wallet — Controller : index.js
-//  Page d'accueil — navigation vers login / signin
-// ============================================================
-import Session from "../Models/session.js";
+// recuperation des elements DOM
+const loginBtn  = document.getElementById("Loginbtn");
+//const signinBtn = document.getElementById("Signinbtn");
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Si déjà connecté → dashboard direct
-  if (Session.isLoggedIn()) {
-    window.location.href = "/src/Views/dashboard.html";
-    return;
-  }
+// bouton Login
+loginBtn.addEventListener("click", handleLogin);
 
-  const loginBtn  = document.getElementById("Loginbtn");
-  const signinBtn = document.getElementById("Signinbtn");
-
-  if (loginBtn) {
-    loginBtn.addEventListener("click", () => {
-      window.location.href = "/src/Views/login.html";
-    });
-  }
-
-  if (signinBtn) {
-    signinBtn.addEventListener("click", () => {
-      // Pour l'instant → même page login
-      window.location.href = "/src/Views/login.html";
-    });
-  }
-});
+function handleLogin() {
+    loginBtn.textContent = "loading...";
+    setTimeout(() => {
+        document.location = "login.html";
+    }, 2000);
+}
